@@ -1,9 +1,10 @@
 package ek.osnb.demo.security;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -14,21 +15,33 @@ class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+                .csrf(CsrfConfigurer::spa)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/hello").permitAll()
+                        .requestMatchers("/", "/index.html", "/app.js", "/api.js", "/style.css", "/components/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .requestMatchers("/api/notes").authenticated()
+                        .requestMatchers("/api/public").permitAll()
                         .anyRequest().authenticated())
-                .formLogin(Customizer.withDefaults())
-                .logout(Customizer.withDefaults())
-                .csrf(csrf -> csrf.disable());
-
+                .formLogin(form -> form
+                        .loginProcessingUrl("/api/login")
+                        .successHandler((_, res, _) -> res.setStatus(HttpServletResponse.SC_NO_CONTENT))
+                        .failureHandler((_, res, _) -> res.setStatus(HttpServletResponse.SC_UNAUTHORIZED))
+                )
+                .logout(logout -> logout
+                        .logoutUrl("/api/logout")
+                        .logoutSuccessHandler((_, res, _) -> res.setStatus(HttpServletResponse.SC_NO_CONTENT))
+                )
+                .exceptionHandling(e -> e
+                        .authenticationEntryPoint(
+                                (_, res, ex) -> res.sendError(HttpServletResponse.SC_UNAUTHORIZED))
+                );
         return http.build();
     }
 
     @Bean
     PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder(10);
+        int strength = 10;
+        return new BCryptPasswordEncoder(strength);
     }
 
 //    @Bean

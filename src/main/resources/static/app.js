@@ -13,6 +13,13 @@ async function render() {
 
     try {
         // TODO Exercise 6:
+        const me = await getMe();
+
+        if(!me){
+            app.append(createLogin(render));
+            return;
+        }
+
         // Call getMe()
         // Not logged in: show only createLogin(render)
         // Logged in: also show createUserInfo(me, render), and pass me to createNotes(me)
@@ -22,6 +29,7 @@ async function render() {
 
         app.append(
             heading,
+            createUserInfo(me,render),
             createNotes()
         );
 

@@ -2,11 +2,7 @@ package ek.osnb.demo.note;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -26,12 +22,15 @@ class NoteController {
         return notes.findByOwner(authentication.getName());
     }
 
+
+    record CreateNoteRequest(String text){
+    }
     // TODO Exercise 3: Save the note with the logged-in user as its owner
     // A form post (text=...), just like the login form
     @PostMapping("/api/notes")
     @ResponseStatus(HttpStatus.CREATED)
-    Note addNote(@RequestParam String text, Authentication authentication) {
-        Note note = new Note(text, authentication.getName());
+    Note addNote(@RequestBody CreateNoteRequest request, Authentication authentication) {
+        Note note = new Note(request.text(), authentication.getName());
         return notes.save(note);
     }
 
