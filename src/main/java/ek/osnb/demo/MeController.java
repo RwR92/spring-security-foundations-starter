@@ -14,6 +14,7 @@ public class MeController {
     MiniMe me (Authentication authentication) {
         List<String> roles = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
+                .filter(a -> a.startsWith("ROLE_"))
                 .toList();
 
         return new MiniMe(authentication.getName(), roles);
