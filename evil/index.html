@@ -19,3 +19,34 @@
     </script>
 </body>
 </html>
+
+/*
+* 1. What HTTP status do you receive?
+*
+*    403 Forbidden. The CsrfFilter requires a valid CSRF token on
+*    state-changing requests (POST, PUT, PATCH, DELETE). The evil form sends
+*    only text=..., so it is rejected before reaching the controller and no
+*    note is created. (Our own frontend also gets 403 until it sends the token.)
+*
+* 2. Why is the session cookie not sufficient to protect against CSRF?
+*
+*    The cookie is an ambient credential: the browser attaches it
+*    automatically to every request to our domain, no matter which site
+*    started the request. It proves which browser sent the request, not that
+*    the user or our own page intended it. A forged request from the evil
+*    page carries the same valid cookie, so the server cannot tell the two
+*    requests apart using the cookie alone.
+*
+* 3. How does a CSRF token solve the problem?
+*
+*    Synchronizer Token Pattern: the server generates a random token, stores
+*    it in the session and gives it to our own pages. Our page must send it
+*    explicitly with every state-changing request (_csrf parameter or
+*    X-CSRF-TOKEN header), and the CsrfFilter compares it with the stored one.
+*    The evil page cannot include it: the browser does not attach it
+*    automatically, the Same-Origin Policy prevents the attacker from reading
+*    our pages to find it, and it is too random to guess.
+*    So the token proves the request came from our own origin.
+*    Limitation: an XSS vulnerability would let an injected script read the
+*    token, so XSS prevention is still needed.
+*/
